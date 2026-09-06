@@ -8,6 +8,18 @@ export const connectDatabase = async () => {
     return
   }
 
+  mongoose.connection.on('error', (error) => {
+    logger.error('MongoDB connection error', error)
+  })
+
+  mongoose.connection.on('disconnected', () => {
+    logger.warn('MongoDB disconnected')
+  })
+
+  mongoose.connection.on('reconnected', () => {
+    logger.info('MongoDB reconnected')
+  })
+
   await mongoose.connect(config.mongoUri)
   logger.info('Connected to MongoDB')
 }

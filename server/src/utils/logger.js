@@ -10,8 +10,16 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()]
 })
 
-export const requestLogger = (request, _response, next) => {
-  logger.info(`${request.method} ${request.originalUrl}`)
+export const requestLogger = (request, response, next) => {
+  const start = Date.now()
+
+  const path = request.originalUrl.split('?')[0]
+
+  response.on('finish', () => {
+    const durationMs = Date.now() - start
+    logger.info(`${request.method} ${path} ${response.statusCode} ${durationMs}ms`)
+  })
+
   next()
 }
 

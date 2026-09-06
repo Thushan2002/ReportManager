@@ -1,17 +1,21 @@
 import jwt from 'jsonwebtoken'
 import { config } from '../config/env.js'
 
-export const requireAuth = (request, _response, next) => {
-  const token = request.headers.authorization?.replace('Bearer ', '')
+const BEARER_PREFIX = 'Bearer '
 
-  if (!token) {
+export const requireAuth = (request, _response, next) => {
+  const header = request.headers.authorization
+
+  if (!header?.startsWith(BEARER_PREFIX)) {
     const error = new Error('Authentication required')
     error.statusCode = 401
     return next(error)
   }
 
+  const token = header.slice(BEARER_PREFIX.length)
+
   try {
-    request.user = jwt.verify(token, config.jwtSecret)
+    request.user = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] })
     return next()
   } catch {
     const error = new Error('Invalid or expired token')

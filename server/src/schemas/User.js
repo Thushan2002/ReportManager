@@ -14,12 +14,11 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-userSchema.pre('save', async function assignBootstrapRole(next) {
+userSchema.pre('save', async function assignBootstrapRole() {
   if (this.isNew) {
     const existingUserCount = await mongoose.model('User').countDocuments()
     this.role = existingUserCount === 0 ? ADMIN_ROLE : EMPLOYEE_ROLE
   }
-  next()
 })
 
 export default mongoose.model('User', userSchema)

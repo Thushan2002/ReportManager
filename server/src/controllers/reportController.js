@@ -1,13 +1,11 @@
 import { ApiError } from '../utils/apiError.js'
 import { createReport, deleteReport, getReport, listReports } from '../services/reportService.js'
-import { validateReport } from '../validations/report.js'
 
 export const list = async (request, response) => {
   response.json(await listReports(request.user.id))
 }
 
 export const create = async (request, response) => {
-  validateReport(request.body)
   response.status(201).json(await createReport(request.user.id, request.body))
 }
 

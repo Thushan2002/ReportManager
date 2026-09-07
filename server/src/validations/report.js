@@ -1,7 +1,5 @@
-import { ApiError } from '../utils/apiError.js'
+import Joi from 'joi'
 
-export const validateReport = ({ title }) => {
-  if (!title?.trim()) {
-    throw new ApiError(400, 'Report title is required')
-  }
-}
+export const reportSchema = Joi.object({
+  title: Joi.string().trim().required()
+}).unknown(true)

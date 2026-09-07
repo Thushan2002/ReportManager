@@ -1,5 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { FiBarChart2, FiLogOut, FiFileText } from "react-icons/fi";
+import {
+  FiBarChart2,
+  FiLogOut,
+  FiFileText,
+  FiFolder,
+  FiGrid,
+  FiUserPlus,
+} from "react-icons/fi";
 import { useAuth } from "../../context/useAuth.js";
 import "./AppShell.scss";
 
@@ -24,15 +31,31 @@ export const AppShell = () => {
             className={({ isActive }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
-            <FiFileText /> Reports{" "}
+            <FiGrid /> Overview{" "}
           </NavLink>
+          <NavLink
+            to="/reports/history"
+            className={({ isActive }) =>
+              isActive ? "nav-link nav-link--active" : "nav-link"
+            }>
+            <FiFileText /> My reports
+          </NavLink>
+          {user?.role === 10 && (
+            <NavLink
+              to="/projects"
+              className={({ isActive }) =>
+                isActive ? "nav-link nav-link--active" : "nav-link"
+              }>
+              <FiFolder /> Projects
+            </NavLink>
+          )}
           <NavLink
             to="/invite"
             end
             className={({ isActive }) =>
               isActive ? "nav-link nav-link--active" : "nav-link"
             }>
-            <FiFileText /> Invite Member{" "}
+            <FiUserPlus /> Invite member{" "}
           </NavLink>
         </nav>
         <div className="sidebar__footer">

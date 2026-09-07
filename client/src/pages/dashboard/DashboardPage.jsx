@@ -1,192 +1,273 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  FiArrowUpRight,
-  FiClock,
-  FiFilePlus,
+  FiActivity,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiFileText,
+  FiPlus,
   FiRefreshCw,
-  FiTrash2,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import client from "../../api/client.js";
-import { Button } from "../../components/button/Button.jsx";
-import { EmptyState } from "../../components/empty-state/EmptyState.jsx";
-import { Field } from "../../components/field/Field.jsx";
 import { Loader } from "../../components/loader/Loader.jsx";
 import { useAuth } from "../../context/useAuth.js";
 import "./Dashboard.scss";
 
 export const DashboardPage = () => {
   const { user } = useAuth();
+  const manager = user?.role === 10;
   const [reports, setReports] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const loadReports = async () => {
-    setIsLoading(true);
+  const [metrics, setMetrics] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("");
+  const [fromFilter, setFromFilter] = useState("");
+  const [toFilter, setToFilter] = useState("");
+  const query = new URLSearchParams({
+    ...(statusFilter && { status: statusFilter }),
+    ...(projectFilter && { project: projectFilter }),
+    ...(ownerFilter && { owner: ownerFilter }),
+    ...(fromFilter && { from: fromFilter }),
+    ...(toFilter && { to: toFilter }),
+  }).toString();
+  const load = async () => {
+    setLoading(true);
     try {
-      const { data } = await client.get("/reports");
-      setReports(data);
+      const reportResponse = await client.get(
+        `/reports${query ? `?${query}` : ""}`,
+      );
+      setReports(reportResponse.data);
+      if (manager) setMetrics((await client.get("/reports/metrics")).data);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Could not load reports.");
+      toast.error(
+        error.response?.data?.message || "Could not load the workspace.",
+      );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   useEffect(() => {
-    client
-      .get("/reports")
-      .then(({ data }) => setReports(data))
-      .catch((error) =>
-        toast.error(error.response?.data?.message || "Could not load reports."),
-      )
-      .finally(() => setIsLoading(false));
-  }, []);
-  const createReport = async (event) => {
-    event.preventDefault();
-    setIsSaving(true);
-    try {
-      const { data } = await client.post("/reports", { title });
-      setReports([data, ...reports]);
-      setTitle("");
-      setShowForm(false);
-      toast.success("Report created.");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Could not create report.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  const deleteReport = async (id) => {
-    try {
-      await client.delete(`/reports/${id}`);
-      setReports(reports.filter((report) => report._id !== id));
-      toast.success("Report removed.");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Could not remove report.");
-    }
-  };
+    const fetchWorkspace = async () => {
+      setLoading(true);
+      try {
+        const reportResponse = await client.get(
+          `/reports${statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : ""}`,
+        );
+        setReports(reportResponse.data);
+        if (manager) setMetrics((await client.get("/reports/metrics")).data);
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || "Could not load the workspace.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWorkspace();
+  }, [statusFilter, projectFilter, ownerFilter, fromFilter, toFilter, manager]);
+  useEffect(() => {
+    if (manager)
+      client
+        .get("/projects")
+        .then(({ data }) => setProjects(data))
+        .catch(() => {});
+  }, [manager]);
+  const owners = reports.reduce(
+    (list, report) =>
+      report.owner && !list.some((owner) => owner._id === report.owner._id)
+        ? [...list, report.owner]
+        : list,
+    [],
+  );
   return (
     <div className="dashboard">
       <header className="page-header">
         <div>
           <span className="eyebrow">
-            {user?.role === 10 ? "Manager workspace" : "Your workspace"}
+            {manager ? "Manager workspace" : "Your workspace"}
           </span>
-          <h1>Reports</h1>
+          <h1>
+            {manager ? "See the work clearly." : "Keep your week visible."}
+          </h1>
           <p>
-            {user?.role === 10
-              ? "Review the work moving across your team."
-              : "A clear view of the work in motion."}
+            {manager
+              ? "Review momentum, blockers, and the reports waiting for your attention."
+              : "A focused home for the work you have done and what comes next."}
           </p>
         </div>
         <div className="header-actions">
           <button
             className="icon-button"
-            onClick={loadReports}
-            aria-label="Refresh reports"
-            title="Refresh reports">
+            onClick={load}
+            aria-label="Refresh dashboard"
+            title="Refresh dashboard">
             <FiRefreshCw />
           </button>
-          <Button onClick={() => setShowForm(!showForm)}>
-            <FiFilePlus /> New report
-          </Button>
+          {!manager && (
+            <Link className="button" to="/reports/new">
+              <FiPlus /> New report
+            </Link>
+          )}
         </div>
       </header>
-      {showForm && (
-        <form className="create-panel" onSubmit={createReport}>
+      {loading ? (
+        <Loader label="Loading workspace" />
+      ) : manager ? (
+        <>
+          <section className="stats">
+            <Metric
+              label="Submitted this week"
+              value={metrics?.submitted || 0}
+              icon={<FiCheckCircle />}
+            />
+            <Metric
+              label="Needs correction"
+              value={metrics?.correction || 0}
+              icon={<FiAlertCircle />}
+              accent
+            />
+            <Metric
+              label="Open blockers"
+              value={metrics?.blockers || 0}
+              icon={<FiActivity />}
+            />
+          </section>
+          <section className="insight-grid">
+            <Insight title="Status mix" values={metrics?.byStatus} />
+            <Insight title="Task load by project" values={metrics?.byProject} />
+            <Insight title="Time by task type" values={metrics?.timeByType} />
+          </section>
+        </>
+      ) : (
+        <section className="personal-hero">
           <div>
-            <span className="eyebrow">New report</span>
-            <h2>What are you working on?</h2>
+            <span className="eyebrow">This week</span>
+            <h2>One honest update beats a dozen scattered notes.</h2>
+            <p>
+              Start a draft, send it when it is ready, and keep the review
+              conversation attached to the report.
+            </p>
           </div>
-          <Field
-            label="Report title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="e.g. Q4 launch summary"
-            autoFocus
-            required
-          />
-          <div className="create-panel__actions">
-            <button
-              type="button"
-              className="button button--ghost"
-              onClick={() => setShowForm(false)}>
-              Cancel
-            </button>
-            <Button type="submit" loading={isSaving}>
-              Create report
-            </Button>
-          </div>
-        </form>
+          <Link className="button" to="/reports/history">
+            <FiFileText /> View report history
+          </Link>
+        </section>
       )}
-      <section className="stats">
-        <div className="stat">
-          <span>{user?.role === 10 ? "Team reports" : "Your reports"}</span>
-          <strong>{reports.length}</strong>
-          <FiFilePlus />
-        </div>
-        <div className="stat">
-          <span>Latest activity</span>
-          <strong>{reports.length ? "Today" : "—"}</strong>
-          <FiClock />
-        </div>
-        <div className="stat stat--accent">
-          <span>Access level</span>
-          <strong>{user?.role === 10 ? "Admin" : "Member"}</strong>
-          <FiArrowUpRight />
-        </div>
-      </section>
-
       <section className="reports-section">
         <div className="section-heading">
           <div>
-            <h2>{user?.role === 10 ? "Team reports" : "Recent reports"}</h2>
-            <span>
-              {reports.length} {reports.length === 1 ? "report" : "reports"} in
-              your workspace
+            <span className="eyebrow">
+              {manager ? "Team queue" : "Recent reports"}
             </span>
+            <h2>
+              {manager ? "Reports across the team" : "Your report history"}
+            </h2>
           </div>
+          {manager && (
+            <div className="dashboard-filters">
+              <select
+                className="filter-select"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="">All statuses</option>
+                <option>Draft</option>
+                <option>Submitted</option>
+                <option>Needs Correction</option>
+                <option>Approved</option>
+              </select>
+              <select
+                className="filter-select"
+                value={ownerFilter}
+                onChange={(event) => setOwnerFilter(event.target.value)}>
+                <option value="">All members</option>
+                {owners.map((owner) => (
+                  <option key={owner._id} value={owner._id}>
+                    {owner.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="filter-select"
+                value={projectFilter}
+                onChange={(event) => setProjectFilter(event.target.value)}>
+                <option value="">All projects</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project.name}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="date-filter"
+                type="date"
+                value={fromFilter}
+                onChange={(event) => setFromFilter(event.target.value)}
+              />
+              <input
+                className="date-filter"
+                type="date"
+                value={toFilter}
+                onChange={(event) => setToFilter(event.target.value)}
+              />
+            </div>
+          )}
         </div>
-        {isLoading ? (
-          <Loader label="Loading reports" />
-        ) : reports.length === 0 ? (
-          <EmptyState onCreate={() => setShowForm(true)} />
-        ) : (
-          <div className="report-list">
-            {reports.map((report) => (
-              <article className="report-row" key={report._id}>
-                <span className="report-row__icon">
-                  <FiFilePlus />
+        <div className="report-list">
+          {reports.map((report) => (
+            <Link
+              className="report-row report-row--link"
+              to={`/reports/${report._id}`}
+              key={report._id}>
+              <span className="report-row__icon">
+                <FiFileText />
+              </span>
+              <div className="report-row__body">
+                <h3>{report.project}</h3>
+                <span>
+                  {report.owner?.name || "You"} /{" "}
+                  {new Date(report.weekStart).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
                 </span>
-                <div className="report-row__body">
-                  <h3>{report.title}</h3>
-                  <span>
-                    Updated{" "}
-                    {new Date(
-                      report.updatedAt || report.createdAt,
-                    ).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <span className="status-pill">
-                  <i /> Draft
-                </span>
-                <button
-                  className="icon-button"
-                  onClick={() => deleteReport(report._id)}
-                  aria-label={`Delete ${report.title}`}
-                  title="Delete report">
-                  <FiTrash2 />
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
+              </div>
+              <span
+                className={`status-badge status-badge--${report.status.toLowerCase().replaceAll(" ", "-")}`}>
+                {report.status}
+              </span>
+            </Link>
+          ))}
+          {!reports.length && (
+            <div className="empty-inline">Nothing matches this view yet.</div>
+          )}
+        </div>
       </section>
     </div>
   );
 };
+
+const Metric = ({ label, value, icon, accent }) => (
+  <div className={`stat ${accent ? "stat--accent" : ""}`}>
+    <span>{label}</span>
+    <strong>{value}</strong>
+    {icon}
+  </div>
+);
+const Insight = ({ title, values }) => (
+  <article className="insight-card">
+    <span className="eyebrow">Visual insight</span>
+    <h3>{title}</h3>
+    {Object.entries(values || {}).map(([key, value]) => (
+      <div className="bar-row" key={key}>
+        <span>{key}</span>
+        <div>
+          <i style={{ width: `${Math.min(100, value * 12 + 8)}%` }} />
+        </div>
+        <b>{value}</b>
+      </div>
+    ))}
+  </article>
+);

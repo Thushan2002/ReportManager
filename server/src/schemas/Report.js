@@ -15,8 +15,11 @@ const versionSchema = new mongoose.Schema({
   version: {type: Number, required: true},
   submittedAt: {type: Date, required: true},
   reviewComment: {type: String, default: ''},
+  status: {type: String, enum: ['Submitted', 'Needs Correction', 'Approved'], default: 'Submitted'},
+  reviewedAt: {type: Date, default: null},
+  reviewedBy: {type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null},
   content: {type: mongoose.Schema.Types.Mixed, required: true}
-}, {_id: false})
+}, {_id: true})
 
 const reportSchema = new mongoose.Schema(
   {

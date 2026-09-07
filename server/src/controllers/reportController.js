@@ -1,5 +1,5 @@
 import {ApiError} from '../utils/apiError.js'
-import {createReport, dashboardMetrics, deleteReport, getReport, listReports, reviewReport, submitReport, updateReport} from '../services/reportService.js'
+import {createReport, dashboardMetrics, deleteReport, getReport, getTeamPulse, listReports, reviewReport, submitReport, updateReport} from '../services/reportService.js'
 
 export const list = async (request, response) => {
   response.json(await listReports(request.user, request.query))
@@ -22,6 +22,8 @@ export const submit = async (request, response) => response.json(await submitRep
 export const review = async (request, response) => response.json(await reviewReport(request.user.id, request.params.id, request.body))
 
 export const metrics = async (_request, response) => response.json(await dashboardMetrics())
+
+export const pulse = async (request, response) => response.json(await getTeamPulse(request.query.weekStart))
 
 export const remove = async (request, response) => {
   const report = await deleteReport(request.user.id, request.params.id)

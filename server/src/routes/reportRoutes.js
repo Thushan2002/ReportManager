@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import {create, get, list, metrics, remove, review, submit, update} from '../controllers/reportController.js'
+import {create, get, list, metrics, pulse, remove, review, submit, update} from '../controllers/reportController.js'
 import {requireAuth} from '../middlewares/auth.js'
 import {validationMiddleware} from '../middlewares/validationMiddleware.js'
 import {asyncHandler} from '../utils/asyncHandler.js'
@@ -12,6 +12,7 @@ router.use(requireAuth)
 
 router.get('/', asyncHandler(list))
 router.get('/metrics', requireRole(ROLES.ADMIN), asyncHandler(metrics))
+router.get('/pulse', requireRole(ROLES.ADMIN), asyncHandler(pulse))
 router.post('/', validationMiddleware(reportSchema), asyncHandler(create))
 router.get('/:id', asyncHandler(get))
 router.patch('/:id', validationMiddleware(reportSchema), asyncHandler(update))

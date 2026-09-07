@@ -19,7 +19,11 @@ const requireInProduction = (value, name, devFallback) => {
 export const config = {
   nodeEnv,
   port: toNumber(process.env.PORT, 5000),
-  mongoUri: requireInProduction(process.env.MONGODB_URI, 'MONGODB_URI', ''),
+  mongoUri: requireInProduction(
+    process.env.MONGODB_URI,
+    'MONGODB_URI',
+    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/report_manager'
+  ),
   jwtSecret: requireInProduction(
     process.env.JWT_SECRET,
     'JWT_SECRET',

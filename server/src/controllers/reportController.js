@@ -2,7 +2,7 @@ import { ApiError } from '../utils/apiError.js'
 import { createReport, deleteReport, getReport, listReports } from '../services/reportService.js'
 
 export const list = async (request, response) => {
-  response.json(await listReports(request.user.id))
+  response.json(await listReports(request.user))
 }
 
 export const create = async (request, response) => {

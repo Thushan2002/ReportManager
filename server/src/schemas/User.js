@@ -1,13 +1,11 @@
 import mongoose from 'mongoose'
-
-const ADMIN_ROLE = 10
-const EMPLOYEE_ROLE = 20
+import { ROLES } from '../constants/roles.js'
 
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    role: { type: Number, enum: [ADMIN_ROLE, EMPLOYEE_ROLE], default: EMPLOYEE_ROLE },
+    role: { type: Number, enum: Object.values(ROLES), default: ROLES.MEMBER },
     // 10 -> Admin, 20 -> Employee. New documents default to Employee.
     passwordHash: { type: String, required: true, select: false }
   },
@@ -17,7 +15,7 @@ const userSchema = new mongoose.Schema(
 userSchema.pre('save', async function assignBootstrapRole() {
   if (this.isNew) {
     const existingUserCount = await mongoose.model('User').countDocuments()
-    this.role = existingUserCount === 0 ? ADMIN_ROLE : EMPLOYEE_ROLE
+    if (existingUserCount === 0) this.role = ROLES.ADMIN
   }
 })
 

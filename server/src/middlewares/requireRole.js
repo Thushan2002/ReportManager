@@ -6,7 +6,7 @@ export const requireRole = (...allowedRoles) => (request, _response, next) => {
     return next(error)
   }
 
-  if (!allowedRoles.includes(request.user.role)) {
+  if (!allowedRoles.includes(Number(request.user.role))) {
     const error = new Error('You do not have permission to perform this action')
     error.statusCode = 403
     return next(error)

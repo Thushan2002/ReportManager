@@ -6,6 +6,13 @@ import { ApiError } from '../utils/apiError.js'
 
 const DUPLICATE_KEY_ERROR_CODE = 11000
 
+const toPublicUser = (user) => ({
+  id: user.id || user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role
+})
+
 const createToken = (user) =>
   jwt.sign({ id: user._id, email: user.email, role: user.role }, config.jwtSecret, {
     expiresIn: config.jwtExpiresIn
@@ -28,7 +35,7 @@ export const registerUser = async ({ name, email, password }) => {
   }
 
   return {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: toPublicUser(user),
     token: createToken(user)
   }
 }
@@ -39,7 +46,7 @@ export const loginUser = async ({ email, password }) => {
   if (!validPassword) throw new ApiError(401, 'Invalid email or password')
 
   return {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: toPublicUser(user),
     token: createToken(user)
   }
 }
@@ -61,7 +68,12 @@ export const inviteUser = async ({ name, email, role, password }) => {
   }
 
   return {
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
-    token: createToken(user)
+    user: toPublicUser(user)
   }
+}
+
+export const getPublicUserById = async (id) => {
+  const user = await User.findById(id)
+  if (!user) throw new ApiError(401, 'Account no longer exists')
+  return toPublicUser(user)
 }

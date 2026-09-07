@@ -1,0 +1,152 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+}
+.sidebar {
+  width: 256px;
+  padding: 30px 20px 20px;
+  background: var(--color-green-dark);
+  color: #f4f5ed;
+  display: flex;
+  flex-direction: column;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.brand > span:last-child > span {
+  color: #8fc4a4;
+}
+.brand__mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--color-green-dark);
+  background: var(--color-orange);
+  font-size: 17px;
+}
+.sidebar__nav {
+  margin-top: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  gap: 5px;
+}
+
+.nav-link {
+  width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border-radius: 8px;
+  color: #b4c5bc;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.nav-link svg {
+  font-size: 17px;
+}
+.nav-link:hover,
+.nav-link--active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.sidebar__footer {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.profile {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.profile div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.profile strong,
+.profile small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile strong {
+  font-size: 12px;
+}
+.profile small {
+  color: #a7b9b0;
+  font-size: 11px;
+}
+.avatar {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #a6d0b4;
+  color: var(--color-green-dark);
+  font-weight: 700;
+}
+.icon-button {
+  padding: 7px;
+  border: 0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #a8beb1;
+  font-size: 17px;
+}
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.main-content {
+  min-width: 0;
+  flex: 1;
+}
+@media (max-width: 760px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    width: 100%;
+    padding: 18px 20px;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+  .sidebar__nav {
+    margin: 0;
+    flex: 1;
+  }
+  .sidebar__footer {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .profile {
+    display: none;
+  }
+}

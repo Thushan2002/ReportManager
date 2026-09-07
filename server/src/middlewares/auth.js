@@ -1,18 +1,19 @@
 import jwt from 'jsonwebtoken'
 import { config } from '../config/env.js'
+import { getSessionToken } from '../utils/session.js'
 
 const BEARER_PREFIX = 'Bearer '
 
 export const requireAuth = (request, _response, next) => {
   const header = request.headers.authorization
+  const bearerToken = header?.startsWith(BEARER_PREFIX) ? header.slice(BEARER_PREFIX.length) : null
+  const token = bearerToken || getSessionToken(request)
 
-  if (!header?.startsWith(BEARER_PREFIX)) {
+  if (!token) {
     const error = new Error('Authentication required')
     error.statusCode = 401
     return next(error)
   }
-
-  const token = header.slice(BEARER_PREFIX.length)
 
   try {
     request.user = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] })

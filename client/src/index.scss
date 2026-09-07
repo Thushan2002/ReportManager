@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-synthesis: none;
+
+  --color-ink: #1e2925;
+  --color-muted: #7b817b;
+  --color-line: #e2e4dc;
+  --color-paper: #fffefa;
+  --color-canvas: #f5f3ee;
+  --color-green: #1b6b52;
+  --color-green-dark: #164c3d;
+  --color-green-pale: #dcebe1;
+  --color-orange: #ef9b52;
+  --color-error: #bd6257;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: var(--color-canvas); }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3, .font-display { font-family: 'Space Grotesk', sans-serif; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,0 +1,31 @@
+.loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 34px;
+  color: var(--color-muted);
+  font-size: 12px;
+
+  &--screen {
+    min-height: 100vh;
+  }
+}
+
+.loader {
+  width: 15px;
+  height: 15px;
+  border: 2px solid #bed4c6;
+  border-top-color: var(--color-green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.button .loader-wrap {
+  padding: 0;
+  color: inherit;
+}
+.button .loader {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}

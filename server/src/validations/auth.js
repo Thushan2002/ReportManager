@@ -1,16 +1,19 @@
-import { ApiError } from '../utils/apiError.js'
+import Joi from 'joi'
 
-export const validateRegistration = ({ name, email, password }) => {
-  if (!name || !email || !password) {
-    throw new ApiError(400, 'Name, email, and password are required')
-  }
-  if (password.length < 8) {
-    throw new ApiError(400, 'Password must be at least 8 characters')
-  }
-}
+export const registrationSchema = Joi.object({
+  name: Joi.string().trim().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required()
+})
 
-export const validateLogin = ({ email, password }) => {
-  if (!email || !password) {
-    throw new ApiError(400, 'Email and password are required')
-  }
-}
+export const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
+})
+
+export const inviteUserSchema = Joi.object({
+  name: Joi.string().trim().required(),
+  email: Joi.string().email().required(),
+  role: Joi.number().valid(10, 20).required(),
+  password: Joi.string().min(8).required()
+})

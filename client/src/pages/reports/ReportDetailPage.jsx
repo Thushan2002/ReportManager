@@ -1,45 +1,56 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiCheck, FiEdit3, FiSend } from "react-icons/fi";
-import toast from "react-hot-toast";
-import client from "../../api/client.js";
-import { Button } from "../../components/button/Button.jsx";
-import { Field } from "../../components/field/Field.jsx";
-import { Loader } from "../../components/loader/Loader.jsx";
-import { useAuth } from "../../context/useAuth.js";
-import "./Reports.scss";
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { FiArrowLeft, FiEdit3, FiClock, FiLayers, FiCheckCircle } from 'react-icons/fi'
+import toast from 'react-hot-toast'
+import client from '../../api/client.js'
+import { Loader } from '../../components/loader/Loader.jsx'
+import { useAuth } from '../../context/useAuth.js'
+import './Reports.scss'
 
 export const ReportDetailPage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [report, setReport] = useState(null);
-  const [comment, setComment] = useState("");
-  const [working, setWorking] = useState(false);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [report, setReport] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedVersion, setSelectedVersion] = useState(null)
+
   useEffect(() => {
-    client
-      .get(`/reports/${id}`)
-      .then(({ data }) => setReport(data))
-      .catch((error) =>
-        toast.error(error.response?.data?.message || "Could not load report."),
-      )
-      .finally(() => {});
-  }, [id]);
-  if (!report) return <Loader fullScreen label="Loading report" />;
-  const review = async (action) => {
-    setWorking(true);
-    try {
-      await client.post(`/reports/${id}/review`, { action, comment });
-      toast.success(
-        action === "approve" ? "Report approved." : "Changes requested.",
-      );
-      navigate("/dashboard");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Could not update review.");
-    } finally {
-      setWorking(false);
+    let cancelled = false
+    const fetchReport = async () => {
+      try {
+        const { data } = await client.get(`/reports/${id}`)
+        if (!cancelled) setReport(data)
+      } catch (error) {
+        if (!cancelled) toast.error(error.response?.data?.message || 'Could not load report.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-  };
+    fetchReport()
+    return () => { cancelled = true }
+  }, [id])
+
+  if (loading) return <Loader fullScreen label="Loading report" />
+  if (!report) {
+    return (
+      <div className="workspace-page">
+        <button className="back-link" onClick={() => navigate(-1)}>
+          <FiArrowLeft /> Back
+        </button>
+        <div className="empty-inline">Report not found.</div>
+      </div>
+    )
+  }
+
+  const isOwner = String(report.owner?._id || report.owner) === String(user?.id)
+  const isManager = user?.role === 10
+  const canEdit = isOwner && ['Draft', 'Needs Correction'].includes(report.status)
+  const canReview = isManager && report.status === 'Submitted'
+
+  const activeContent = selectedVersion ? selectedVersion.content : report
+  const isViewingHistorical = Boolean(selectedVersion)
+
   return (
     <div className="workspace-page report-detail">
       <header className="page-header">
@@ -48,125 +59,173 @@ export const ReportDetailPage = () => {
             <FiArrowLeft /> Back
           </button>
           <span className="eyebrow">
-            {report.owner?.name || "Your report"} / {report.project}
+            {report.owner?.name || 'Your report'} / {report.project}
           </span>
           <h1>
-            Week of{" "}
+            Week of{' '}
             {new Date(report.weekStart).toLocaleDateString(undefined, {
-              month: "long",
-              day: "numeric",
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
             })}
           </h1>
           <p>
-            {new Date(report.weekStart).toLocaleDateString()} -{" "}
-            {new Date(report.weekEnd).toLocaleDateString()}
+            {new Date(report.weekStart).toLocaleDateString()} – {new Date(report.weekEnd).toLocaleDateString()}
           </p>
         </div>
-        <span
-          className={`status-badge status-badge--${report.status.toLowerCase().replaceAll(" ", "-")}`}>
-          {report.status}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span
+            className={`status-badge status-badge--${report.status.toLowerCase().replaceAll(' ', '-')}`}
+          >
+            {report.status}
+          </span>
+          {canEdit && (
+            <Link className="button" to={`/reports/${id}/edit`}>
+              <FiEdit3 /> Edit Report
+            </Link>
+          )}
+          {canReview && (
+            <Link className="button button--accent" to={`/reports/${id}/review`}>
+              <FiCheckCircle /> Review Submission
+            </Link>
+          )}
+        </div>
       </header>
-      {report.reviewComment && (
+
+      {/* Version History Selector */}
+      {report.versions && report.versions.length > 0 && (
+        <section className="version-tabs-section">
+          <div className="version-tabs-header">
+            <FiLayers />
+            <span>Submission Version History ({report.versions.length}):</span>
+          </div>
+          <div className="version-pill-group">
+            <button
+              className={`version-pill ${!selectedVersion ? 'version-pill--active' : ''}`}
+              onClick={() => setSelectedVersion(null)}
+            >
+              Current Version
+            </button>
+            {report.versions.map((v) => (
+              <button
+                key={v.version}
+                className={`version-pill ${selectedVersion?.version === v.version ? 'version-pill--active' : ''}`}
+                onClick={() => setSelectedVersion(v)}
+              >
+                Version {v.version} ({new Date(v.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})
+              </button>
+            ))}
+          </div>
+
+          {isViewingHistorical && (
+            <div className="version-historical-notice">
+              <FiClock /> Viewing snapshot of <strong>Version {selectedVersion.version}</strong> submitted on{' '}
+              {new Date(selectedVersion.submittedAt).toLocaleString()}.
+              {selectedVersion.reviewComment && (
+                <div className="version-past-comment">
+                  <strong>Manager Feedback:</strong> "{selectedVersion.reviewComment}"
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Latest Review Feedback Note */}
+      {report.reviewComment && !isViewingHistorical && (
         <div className="review-note">
-          <strong>Latest review note</strong>
+          <strong>Manager Feedback Note:</strong>
           <p>{report.reviewComment}</p>
         </div>
       )}
-      <section className="detail-grid">
-        <article className="detail-card detail-card--wide">
-          <span className="eyebrow">Completed tasks</span>
-          <h2>Work delivered</h2>
-          <div className="detail-tasks">
-            {report.tasks.map((task) => (
-              <div className="detail-task" key={task._id || task.name}>
-                <div>
-                  <strong>{task.name}</strong>
-                  <span>{task.deliverable || "No deliverable noted"}</span>
-                </div>
-                <span>{task.status}</span>
-                <b>{task.actualPercent}%</b>
-              </div>
-            ))}
+
+      {/* Task Level Table */}
+      <section className="form-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Task-level table</span>
+            <h2>Tasks Delivered ({activeContent.tasks?.length || 0})</h2>
           </div>
-        </article>
+        </div>
+        <div className="task-table">
+          <div className="task-table__head" style={{ gridTemplateColumns: '1.5fr 0.85fr 0.6fr 0.6fr 1fr 0.65fr 0.65fr 1.2fr' }}>
+            <span>Task Name</span>
+            <span>Priority</span>
+            <span>Planned %</span>
+            <span>Actual %</span>
+            <span>Status</span>
+            <span>Plan hrs</span>
+            <span>Spent hrs</span>
+            <span>Deliverable Output</span>
+          </div>
+          {activeContent.tasks?.map((task, idx) => (
+            <div className="task-table__row" style={{ gridTemplateColumns: '1.5fr 0.85fr 0.6fr 0.6fr 1fr 0.65fr 0.65fr 1.2fr', padding: '12px 10px' }} key={task._id || idx}>
+              <strong style={{ fontSize: '13px' }}>{task.name}</strong>
+              <span className={`priority-badge priority-${task.priority?.toLowerCase()}`}>{task.priority}</span>
+              <span>{task.plannedPercent}%</span>
+              <b style={{ color: 'var(--color-green)' }}>{task.actualPercent}%</b>
+              <span>{task.status}</span>
+              <span>{task.plannedHours}h</span>
+              <span>{task.spentHours}h</span>
+              <span style={{ color: 'var(--color-muted)', fontSize: '12px' }}>{task.deliverable || '—'}</span>
+            </div>
+          ))}
+          {(!activeContent.tasks || activeContent.tasks.length === 0) && (
+            <div className="empty-inline">No tasks recorded.</div>
+          )}
+        </div>
+      </section>
+
+      {/* Grid: Next Week, Blockers, Achievements, Notes */}
+      <section className="detail-grid">
         <article className="detail-card">
-          <span className="eyebrow">Next week</span>
-          <h2>Planned work</h2>
-          <p>{report.nextWeekTasks || "No next-week plan recorded."}</p>
+          <span className="eyebrow">Planned Work</span>
+          <h2>Tasks Planned for Next Week</h2>
+          <p>{activeContent.nextWeekTasks || 'No next week tasks noted.'}</p>
         </article>
-        <article className="detail-card">
-          <span className="eyebrow">Signal</span>
+
+        <article className={`detail-card ${activeContent.keyBlocker ? 'detail-card--highlighted' : ''}`}>
+          <span className="eyebrow">Blockers & Challenges</span>
           <h2>
-            {report.keyBlocker
-              ? "Key blocker"
-              : report.keyAchievement
-                ? "Key achievement"
-                : "Team context"}
+            {activeContent.keyBlocker ? '⚠️ Key Blocker Flagged' : 'Blockers'}
           </h2>
-          <p>
-            {report.keyBlocker
-              ? report.blockers
-              : report.keyAchievement
-                ? report.achievements
-                : report.notes || "No highlighted context."}
-          </p>
+          <p>{activeContent.blockers || 'No blockers reported this week.'}</p>
+        </article>
+
+        <article className={`detail-card ${activeContent.keyAchievement ? 'detail-card--highlighted' : ''}`}>
+          <span className="eyebrow">Achievements & Highlights</span>
+          <h2>
+            {activeContent.keyAchievement ? '🌟 Key Highlight Flagged' : 'Achievements'}
+          </h2>
+          <p>{activeContent.achievements || 'No achievements highlighted.'}</p>
+        </article>
+
+        <article className="detail-card">
+          <span className="eyebrow">Notes & Links</span>
+          <h2>Optional Notes</h2>
+          <p>{activeContent.notes || 'No additional notes or links.'}</p>
         </article>
       </section>
-      {user?.role === 10 && report.status === "Submitted" && (
-        <section className="review-panel">
-          <div>
-            <span className="eyebrow">Manager review</span>
-            <h2>Close the loop</h2>
-            <p>
-              Approve this report or send it back with one clear correction
-              note.
-            </p>
-          </div>
-          <Field
-            label="Correction comment"
-            value={comment}
-            onChange={(event) => setComment(event.target.value)}
-            placeholder="What should be clarified?"
-          />
-          <div className="review-actions">
-            <Button
-              variant="secondary"
-              onClick={() => review("approve")}
-              loading={working}>
-              <FiCheck /> Approve
-            </Button>
-            <Button onClick={() => review("request_changes")} loading={working}>
-              <FiSend /> Request changes
-            </Button>
-          </div>
-        </section>
-      )}
-      {user?.role !== 10 &&
-        ["Draft", "Needs Correction"].includes(report.status) && (
-          <div className="editor-actions">
-            <Link className="button" to={`/reports/${id}/edit`}>
-              <FiEdit3 /> Edit report
-            </Link>
-          </div>
-        )}
-      {report.versions?.length > 0 && (
+
+      {/* Hours Breakdown */}
+      {activeContent.hours && (
         <section className="form-section">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">Version history</span>
-              <h2>Previous submissions</h2>
+              <span className="eyebrow">Time allocation</span>
+              <h2>Hours by Task Type</h2>
             </div>
           </div>
-          {report.versions.map((version) => (
-            <div className="version-row" key={version.version}>
-              <strong>Version {version.version}</strong>
-              <span>{new Date(version.submittedAt).toLocaleString()}</span>
-              <p>{version.reviewComment || "Submitted for review"}</p>
-            </div>
-          ))}
+          <div className="form-grid form-grid--five">
+            {Object.entries(activeContent.hours).map(([cat, val]) => (
+              <div className="stat" key={cat} style={{ minHeight: '85px', padding: '12px' }}>
+                <span style={{ textTransform: 'capitalize' }}>{cat}</span>
+                <strong style={{ fontSize: '20px', marginTop: '6px' }}>{val || 0}h</strong>
+              </div>
+            ))}
+          </div>
         </section>
       )}
     </div>
-  );
-};
+  )
+}

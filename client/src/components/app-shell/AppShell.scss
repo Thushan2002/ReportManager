@@ -2,6 +2,9 @@
   min-height: 100vh;
   display: flex;
 }
+.mobile-topbar {
+  display: none;
+}
 .sidebar {
   width: 256px;
   padding: 30px 20px 20px;
@@ -9,12 +12,13 @@
   color: #f4f5ed;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -33,28 +37,23 @@
   font-size: 17px;
 }
 .sidebar__nav {
-  margin-top: 68px;
+  margin-top: 48px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: start;
-  gap: 5px;
+  align-items: stretch;
+  gap: 6px;
 }
-
 .nav-link {
-  width: 200px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 13px;
+  padding: 11px 14px;
   border-radius: 8px;
   color: #b4c5bc;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 .nav-link svg {
   font-size: 17px;
@@ -63,6 +62,9 @@
 .nav-link--active {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+.nav-link--active {
+  background: rgba(255, 255, 255, 0.15);
 }
 .sidebar__footer {
   margin-top: auto;
@@ -78,6 +80,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.profile:hover strong {
+  text-decoration: underline;
 }
 .profile div {
   min-width: 0;
@@ -125,28 +132,44 @@
 .main-content {
   min-width: 0;
   flex: 1;
+  background: var(--color-canvas);
 }
-@media (max-width: 760px) {
+
+@media (max-width: 800px) {
   .app-shell {
-    display: block;
+    flex-direction: column;
+  }
+  .desktop-only {
+    display: none;
+  }
+  .mobile-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--color-green-dark);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .mobile-nav-toggle {
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 24px;
+    display: grid;
+    place-items: center;
   }
   .sidebar {
+    display: none;
     width: 100%;
-    padding: 18px 20px;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
+    padding: 16px 20px 24px;
+  }
+  .sidebar--open {
+    display: flex;
   }
   .sidebar__nav {
-    margin: 0;
-    flex: 1;
-  }
-  .sidebar__footer {
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .profile {
-    display: none;
+    margin-top: 10px;
   }
 }

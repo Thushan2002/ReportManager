@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   FiActivity,
   FiAlertCircle,
@@ -7,267 +7,429 @@ import {
   FiFileText,
   FiPlus,
   FiRefreshCw,
-} from "react-icons/fi";
-import toast from "react-hot-toast";
-import client from "../../api/client.js";
-import { Loader } from "../../components/loader/Loader.jsx";
-import { useAuth } from "../../context/useAuth.js";
-import "./Dashboard.scss";
+  FiTrendingUp,
+  FiUsers,
+  FiEye
+} from 'react-icons/fi'
+import toast from 'react-hot-toast'
+import client from '../../api/client.js'
+import { Loader } from '../../components/loader/Loader.jsx'
+import { useAuth } from '../../context/useAuth.js'
+import { TrendLineChart, HorizontalBarChart, DonutTimeChart, ComplianceStatusBar } from '../../components/charts/Charts.jsx'
+import { TeamPulseView } from './TeamPulseView.jsx'
+import './Dashboard.scss'
 
 export const DashboardPage = () => {
-  const { user } = useAuth();
-  const manager = user?.role === 10;
-  const [reports, setReports] = useState([]);
-  const [metrics, setMetrics] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
-  const [ownerFilter, setOwnerFilter] = useState("");
-  const [fromFilter, setFromFilter] = useState("");
-  const [toFilter, setToFilter] = useState("");
-  const query = new URLSearchParams({
-    ...(statusFilter && { status: statusFilter }),
-    ...(projectFilter && { project: projectFilter }),
-    ...(ownerFilter && { owner: ownerFilter }),
-    ...(fromFilter && { from: fromFilter }),
-    ...(toFilter && { to: toFilter }),
-  }).toString();
-  const load = async () => {
-    setLoading(true);
+  const { user } = useAuth()
+  const manager = user?.role === 10
+
+  const [reports, setReports] = useState([])
+  const [metrics, setMetrics] = useState(null)
+  const [projects, setProjects] = useState([])
+  const [teamMembers, setTeamMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [ownerFilter, setOwnerFilter] = useState('')
+  const [fromFilter, setFromFilter] = useState('')
+  const [toFilter, setToFilter] = useState('')
+
+  // View mode tab for manager: 'overview' vs 'pulse'
+  const [viewTab, setViewTab] = useState('overview')
+
+  const fetchWorkspace = async () => {
+    setLoading(true)
     try {
-      const reportResponse = await client.get(
-        `/reports${query ? `?${query}` : ""}`,
-      );
-      setReports(reportResponse.data);
-      if (manager) setMetrics((await client.get("/reports/metrics")).data);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Could not load the workspace.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    const fetchWorkspace = async () => {
-      setLoading(true);
-      try {
-        const reportResponse = await client.get(
-          `/reports${statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : ""}`,
-        );
-        setReports(reportResponse.data);
-        if (manager) setMetrics((await client.get("/reports/metrics")).data);
-      } catch (error) {
-        toast.error(
-          error.response?.data?.message || "Could not load the workspace.",
-        );
-      } finally {
-        setLoading(false);
+      const query = new URLSearchParams({
+        ...(statusFilter && { status: statusFilter }),
+        ...(projectFilter && { project: projectFilter }),
+        ...(ownerFilter && { owner: ownerFilter }),
+        ...(fromFilter && { from: fromFilter }),
+        ...(toFilter && { to: toFilter })
+      }).toString()
+
+      const [repRes, projRes, membersRes] = await Promise.all([
+        client.get(`/reports${query ? `?${query}` : ''}`),
+        manager ? client.get('/projects').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+        manager ? client.get('/users').catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+      ])
+
+      setReports(repRes.data)
+      if (manager) {
+        setProjects(projRes.data)
+        setTeamMembers(membersRes.data)
+        const metricsRes = await client.get('/reports/metrics')
+        setMetrics(metricsRes.data)
       }
-    };
-    fetchWorkspace();
-  }, [statusFilter, projectFilter, ownerFilter, fromFilter, toFilter, manager]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not load workspace data.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    if (manager)
-      client
-        .get("/projects")
-        .then(({ data }) => setProjects(data))
-        .catch(() => {});
-  }, [manager]);
-  const owners = reports.reduce(
-    (list, report) =>
-      report.owner && !list.some((owner) => owner._id === report.owner._id)
-        ? [...list, report.owner]
-        : list,
-    [],
-  );
+    fetchWorkspace()
+  }, [statusFilter, projectFilter, ownerFilter, fromFilter, toFilter, manager])
+
+  const resetFilters = () => {
+    setStatusFilter('')
+    setProjectFilter('')
+    setOwnerFilter('')
+    setFromFilter('')
+    setToFilter('')
+  }
+
+  const hasActiveFilters = Boolean(statusFilter || projectFilter || ownerFilter || fromFilter || toFilter)
+
   return (
     <div className="dashboard">
       <header className="page-header">
         <div>
           <span className="eyebrow">
-            {manager ? "Manager workspace" : "Your workspace"}
+            {manager ? 'Executive & Team Workspace' : 'Personal Workspace'}
           </span>
           <h1>
-            {manager ? "See the work clearly." : "Keep your week visible."}
+            {manager ? 'See the team\'s work clearly.' : 'Keep your week in focus.'}
           </h1>
           <p>
             {manager
-              ? "Review momentum, blockers, and the reports waiting for your attention."
-              : "A focused home for the work you have done and what comes next."}
+              ? 'Analyze team momentum, compliance, blockers, and review weekly reports.'
+              : 'Record tasks delivered, plan ahead, and keep reviews in one shared place.'}
           </p>
         </div>
         <div className="header-actions">
           <button
             className="icon-button"
-            onClick={load}
+            onClick={fetchWorkspace}
             aria-label="Refresh dashboard"
-            title="Refresh dashboard">
+            title="Refresh dashboard"
+          >
             <FiRefreshCw />
           </button>
           {!manager && (
             <Link className="button" to="/reports/new">
-              <FiPlus /> New report
+              <FiPlus /> New Weekly Report
             </Link>
           )}
         </div>
       </header>
+
+      {/* Tab Switcher for Manager (Overview vs Section Pulse) */}
+      {manager && (
+        <div className="dashboard-view-tabs">
+          <button
+            className={`dashboard-view-tab ${viewTab === 'overview' ? 'dashboard-view-tab--active' : ''}`}
+            onClick={() => setViewTab('overview')}
+          >
+            <FiTrendingUp /> Overview & Insights
+          </button>
+          <button
+            className={`dashboard-view-tab ${viewTab === 'pulse' ? 'dashboard-view-tab--active' : ''}`}
+            onClick={() => setViewTab('pulse')}
+          >
+            <FiActivity /> Team Pulse (Side-by-Side Sections)
+          </button>
+        </div>
+      )}
+
       {loading ? (
-        <Loader label="Loading workspace" />
+        <Loader label="Loading workspace data..." />
+      ) : manager && viewTab === 'pulse' ? (
+        <TeamPulseView />
       ) : manager ? (
         <>
-          <section className="stats">
+          {/* Summary Metric Cards */}
+          <section className="stats dashboard-stats-grid">
             <Metric
-              label="Submitted this week"
+              label="Submitted This Week"
               value={metrics?.submitted || 0}
+              subtext={`${metrics?.total || 0} total updates created`}
               icon={<FiCheckCircle />}
             />
             <Metric
-              label="Needs correction"
-              value={metrics?.correction || 0}
-              icon={<FiAlertCircle />}
-              accent
+              label="Submission Compliance"
+              value={`${metrics?.complianceRate || 0}%`}
+              subtext={`${metrics?.notStartedCount || 0} members pending/late`}
+              icon={<FiUsers />}
+              accent={metrics?.complianceRate < 70}
             />
             <Metric
-              label="Open blockers"
+              label="Needs Correction"
+              value={metrics?.correction || 0}
+              subtext="Awaiting member updates"
+              icon={<FiAlertCircle />}
+              highlight={metrics?.correction > 0}
+            />
+            <Metric
+              label="Open Blockers"
               value={metrics?.blockers || 0}
+              subtext="Flagged risks across team"
               icon={<FiActivity />}
+              highlight={metrics?.blockers > 0}
             />
           </section>
-          <section className="insight-grid">
-            <Insight title="Status mix" values={metrics?.byStatus} />
-            <Insight title="Task load by project" values={metrics?.byProject} />
-            <Insight title="Time by task type" values={metrics?.timeByType} />
+
+          {/* Visual Insights Grid */}
+          <section className="insight-grid-v2">
+            {/* Chart 1: Tasks Completion Trend */}
+            <article className="insight-card-v2">
+              <div className="insight-card__head">
+                <div>
+                  <span className="eyebrow">Momentum</span>
+                  <h3>Tasks Completed Trend Over Time</h3>
+                </div>
+              </div>
+              <TrendLineChart data={metrics?.tasksTrend || []} />
+            </article>
+
+            {/* Chart 2: Member Compliance Status */}
+            <article className="insight-card-v2">
+              <div className="insight-card__head">
+                <div>
+                  <span className="eyebrow">Team Compliance</span>
+                  <h3>Submission Status by Member</h3>
+                </div>
+              </div>
+              <ComplianceStatusBar members={metrics?.memberCompliance || []} />
+            </article>
+
+            {/* Chart 3: Workload by Project */}
+            <article className="insight-card-v2">
+              <div className="insight-card__head">
+                <div>
+                  <span className="eyebrow">Allocation</span>
+                  <h3>Task Load by Project</h3>
+                </div>
+              </div>
+              <HorizontalBarChart data={metrics?.byProject || {}} unit="tasks" />
+            </article>
+
+            {/* Chart 4: Time Spent by Task Type */}
+            <article className="insight-card-v2">
+              <div className="insight-card__head">
+                <div>
+                  <span className="eyebrow">Time Distribution</span>
+                  <h3>Team Hours by Task Category</h3>
+                </div>
+              </div>
+              <DonutTimeChart hours={metrics?.timeByType || {}} />
+            </article>
           </section>
+
+          {/* Recent Activity Feed */}
+          {metrics?.recentActivity && metrics.recentActivity.length > 0 && (
+            <section className="form-section">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">Live Activity</span>
+                  <h2>Recent Submission & Review Actions</h2>
+                </div>
+              </div>
+              <div className="activity-feed">
+                {metrics.recentActivity.map((act) => (
+                  <div className="activity-item" key={act.id}>
+                    <span className={`activity-icon activity-icon--${act.type}`}>
+                      {act.type === 'approved' ? <FiCheckCircle /> : act.type === 'submitted' ? <FiFileText /> : <FiAlertCircle />}
+                    </span>
+                    <div className="activity-content">
+                      <div className="activity-title">
+                        <strong>{act.title}</strong>
+                        <small>{new Date(act.timestamp).toLocaleString()}</small>
+                      </div>
+                      <p>{act.description}</p>
+                    </div>
+                    <Link to={`/reports/${act.reportId}`} className="activity-link" title="View report">
+                      <FiEye />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       ) : (
+        /* Team Member Personal Hero */
         <section className="personal-hero">
           <div>
-            <span className="eyebrow">This week</span>
+            <span className="eyebrow">Weekly Rhythm</span>
             <h2>One honest update beats a dozen scattered notes.</h2>
             <p>
-              Start a draft, send it when it is ready, and keep the review
-              conversation attached to the report.
+              Fill in your tasks, highlight blockers early, log category hours, and collaborate directly with your manager on review notes.
             </p>
           </div>
-          <Link className="button" to="/reports/history">
-            <FiFileText /> View report history
-          </Link>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Link className="button" to="/reports/new">
+              <FiPlus /> Create This Week's Report
+            </Link>
+            <Link className="button button--secondary" to="/reports/history">
+              <FiFileText /> View Past History
+            </Link>
+          </div>
         </section>
       )}
+
+      {/* Reports Queue / History Table */}
       <section className="reports-section">
         <div className="section-heading">
           <div>
             <span className="eyebrow">
-              {manager ? "Team queue" : "Recent reports"}
+              {manager ? 'Team Report Queue' : 'Your Recent Reports'}
             </span>
             <h2>
-              {manager ? "Reports across the team" : "Your report history"}
+              {manager ? 'All Team Submissions' : 'Recent Weekly Updates'}
             </h2>
           </div>
+
+          {/* Filter Bar */}
           {manager && (
             <div className="dashboard-filters">
               <select
                 className="filter-select"
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}>
-                <option value="">All statuses</option>
-                <option>Draft</option>
-                <option>Submitted</option>
-                <option>Needs Correction</option>
-                <option>Approved</option>
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="Draft">Draft</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Needs Correction">Needs Correction</option>
+                <option value="Approved">Approved</option>
               </select>
+
               <select
                 className="filter-select"
                 value={ownerFilter}
-                onChange={(event) => setOwnerFilter(event.target.value)}>
-                <option value="">All members</option>
-                {owners.map((owner) => (
-                  <option key={owner._id} value={owner._id}>
-                    {owner.name}
+                onChange={(e) => setOwnerFilter(e.target.value)}
+              >
+                <option value="">All Members</option>
+                {teamMembers.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {m.name}
                   </option>
                 ))}
               </select>
+
               <select
                 className="filter-select"
                 value={projectFilter}
-                onChange={(event) => setProjectFilter(event.target.value)}>
-                <option value="">All projects</option>
-                {projects.map((project) => (
-                  <option key={project._id} value={project.name}>
-                    {project.name}
+                onChange={(e) => setProjectFilter(e.target.value)}
+              >
+                <option value="">All Projects</option>
+                {projects.map((p) => (
+                  <option key={p._id} value={p.name}>
+                    {p.name}
                   </option>
                 ))}
               </select>
+
               <input
                 className="date-filter"
                 type="date"
+                title="Filter from date"
                 value={fromFilter}
-                onChange={(event) => setFromFilter(event.target.value)}
+                onChange={(e) => setFromFilter(e.target.value)}
               />
               <input
                 className="date-filter"
                 type="date"
+                title="Filter to date"
                 value={toFilter}
-                onChange={(event) => setToFilter(event.target.value)}
+                onChange={(e) => setToFilter(e.target.value)}
               />
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={resetFilters}
+                  style={{ alignSelf: 'center', marginLeft: '4px' }}
+                >
+                  Reset
+                </button>
+              )}
             </div>
           )}
         </div>
+
         <div className="report-list">
           {reports.map((report) => (
-            <Link
-              className="report-row report-row--link"
-              to={`/reports/${report._id}`}
-              key={report._id}>
+            <div className="report-row" key={report._id}>
               <span className="report-row__icon">
                 <FiFileText />
               </span>
               <div className="report-row__body">
-                <h3>{report.project}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Link to={`/reports/${report._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <h3 style={{ display: 'inline-block' }}>{report.project}</h3>
+                  </Link>
+                  {report.keyBlocker && (
+                    <span className="mini-badge mini-badge--blocker">⚠️ Blocker</span>
+                  )}
+                  {report.keyAchievement && (
+                    <span className="mini-badge mini-badge--achievement">🌟 Highlight</span>
+                  )}
+                </div>
                 <span>
-                  {report.owner?.name || "You"} /{" "}
+                  {report.owner?.name || 'You'} • Week of{' '}
                   {new Date(report.weekStart).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
                   })}
+                  {report.tasks?.length ? ` • ${report.tasks.length} tasks` : ''}
                 </span>
+                {report.reviewComment && (
+                  <div className="row-feedback-snippet">
+                    <strong>Review Note:</strong> {report.reviewComment}
+                  </div>
+                )}
               </div>
+
               <span
-                className={`status-badge status-badge--${report.status.toLowerCase().replaceAll(" ", "-")}`}>
+                className={`status-badge status-badge--${report.status.toLowerCase().replaceAll(' ', '-')}`}
+              >
                 {report.status}
               </span>
-            </Link>
+
+              <div className="row-actions">
+                <Link
+                  className="button button--secondary"
+                  to={`/reports/${report._id}`}
+                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                >
+                  View
+                </Link>
+                {manager && report.status === 'Submitted' && (
+                  <Link
+                    className="button"
+                    to={`/reports/${report._id}/review`}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    Review
+                  </Link>
+                )}
+              </div>
+            </div>
           ))}
-          {!reports.length && (
-            <div className="empty-inline">Nothing matches this view yet.</div>
+
+          {reports.length === 0 && (
+            <div className="empty-inline">
+              No reports match the selected filters.
+            </div>
           )}
         </div>
       </section>
     </div>
-  );
-};
+  )
+}
 
-const Metric = ({ label, value, icon, accent }) => (
-  <div className={`stat ${accent ? "stat--accent" : ""}`}>
+const Metric = ({ label, value, subtext, icon, accent, highlight }) => (
+  <div className={`stat ${accent ? 'stat--accent' : ''} ${highlight ? 'stat--highlight' : ''}`}>
     <span>{label}</span>
     <strong>{value}</strong>
+    {subtext && <small className="stat-subtext">{subtext}</small>}
     {icon}
   </div>
-);
-const Insight = ({ title, values }) => (
-  <article className="insight-card">
-    <span className="eyebrow">Visual insight</span>
-    <h3>{title}</h3>
-    {Object.entries(values || {}).map(([key, value]) => (
-      <div className="bar-row" key={key}>
-        <span>{key}</span>
-        <div>
-          <i style={{ width: `${Math.min(100, value * 12 + 8)}%` }} />
-        </div>
-        <b>{value}</b>
-      </div>
-    ))}
-  </article>
-);
+)

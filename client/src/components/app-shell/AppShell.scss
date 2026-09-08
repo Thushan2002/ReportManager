@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -53,7 +53,9 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 .nav-link svg {
   font-size: 17px;
@@ -127,7 +129,7 @@
 }
 .icon-button:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: var(--color-green-dark);
 }
 .main-content {
   min-width: 0;

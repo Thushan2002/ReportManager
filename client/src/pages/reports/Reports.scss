@@ -22,7 +22,7 @@
 }
 .back-link,
 .text-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   padding: 0;
@@ -395,10 +395,22 @@
   font-weight: 700;
   display: inline-block;
 }
-.priority-low { background: #edf2f7; color: #4a5568; }
-.priority-medium { background: #e6fffa; color: #234e52; }
-.priority-high { background: #feebc8; color: #7b341e; }
-.priority-critical { background: #fed7d7; color: #9b2c2c; }
+.priority-low {
+  background: #edf2f7;
+  color: #4a5568;
+}
+.priority-medium {
+  background: #e6fffa;
+  color: #234e52;
+}
+.priority-high {
+  background: #feebc8;
+  color: #7b341e;
+}
+.priority-critical {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
 
 @media (max-width: 800px) {
   .form-grid--two,

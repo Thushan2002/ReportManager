@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Link, Outlet } from 'react-router-dom'
+import { useState } from "react";
+import { NavLink, Link, Outlet } from "react-router-dom";
 import {
   FiBarChart2,
   FiLogOut,
@@ -10,17 +10,18 @@ import {
   FiSettings,
   FiPlus,
   FiMenu,
-  FiX
-} from 'react-icons/fi'
-import { useAuth } from '../../context/useAuth.js'
-import './AppShell.scss'
+  FiX,
+} from "react-icons/fi";
+import { useAuth } from "../../context/useAuth.js";
+import { ManagerChat } from "../manager-chat/ManagerChat.jsx";
+import "./AppShell.scss";
 
 export const AppShell = () => {
-  const { user, logout } = useAuth()
-  const isManager = user?.role === 10
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { user, logout } = useAuth();
+  const isManager = user?.role === 10;
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const closeMobileNav = () => setMobileNavOpen(false)
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   return (
     <div className="app-shell">
@@ -37,14 +38,13 @@ export const AppShell = () => {
         <button
           className="mobile-nav-toggle"
           onClick={() => setMobileNavOpen(!mobileNavOpen)}
-          aria-label="Toggle navigation"
-        >
+          aria-label="Toggle navigation">
           {mobileNavOpen ? <FiX /> : <FiMenu />}
         </button>
       </div>
 
       {/* Sidebar */}
-      <aside className={`sidebar ${mobileNavOpen ? 'sidebar--open' : ''}`}>
+      <aside className={`sidebar ${mobileNavOpen ? "sidebar--open" : ""}`}>
         <div className="brand desktop-only">
           <span className="brand__mark">
             <FiBarChart2 />
@@ -60,9 +60,8 @@ export const AppShell = () => {
             end
             onClick={closeMobileNav}
             className={({ isActive }) =>
-              isActive ? 'nav-link nav-link--active' : 'nav-link'
-            }
-          >
+              isActive ? "nav-link nav-link--active" : "nav-link"
+            }>
             <FiGrid /> Overview
           </NavLink>
 
@@ -70,9 +69,8 @@ export const AppShell = () => {
             to="/reports/history"
             onClick={closeMobileNav}
             className={({ isActive }) =>
-              isActive ? 'nav-link nav-link--active' : 'nav-link'
-            }
-          >
+              isActive ? "nav-link nav-link--active" : "nav-link"
+            }>
             <FiFileText /> My Reports
           </NavLink>
 
@@ -81,9 +79,8 @@ export const AppShell = () => {
               to="/reports/new"
               onClick={closeMobileNav}
               className={({ isActive }) =>
-                isActive ? 'nav-link nav-link--active' : 'nav-link'
-              }
-            >
+                isActive ? "nav-link nav-link--active" : "nav-link"
+              }>
               <FiPlus /> New Report
             </NavLink>
           )}
@@ -94,9 +91,8 @@ export const AppShell = () => {
                 to="/team"
                 onClick={closeMobileNav}
                 className={({ isActive }) =>
-                  isActive ? 'nav-link nav-link--active' : 'nav-link'
-                }
-              >
+                  isActive ? "nav-link nav-link--active" : "nav-link"
+                }>
                 <FiUsers /> Team Members
               </NavLink>
 
@@ -104,9 +100,8 @@ export const AppShell = () => {
                 to="/projects"
                 onClick={closeMobileNav}
                 className={({ isActive }) =>
-                  isActive ? 'nav-link nav-link--active' : 'nav-link'
-                }
-              >
+                  isActive ? "nav-link nav-link--active" : "nav-link"
+                }>
                 <FiFolder /> Projects
               </NavLink>
             </>
@@ -116,31 +111,31 @@ export const AppShell = () => {
             to="/settings"
             onClick={closeMobileNav}
             className={({ isActive }) =>
-              isActive ? 'nav-link nav-link--active' : 'nav-link'
-            }
-          >
+              isActive ? "nav-link nav-link--active" : "nav-link"
+            }>
             <FiSettings /> Settings
           </NavLink>
         </nav>
 
         <div className="sidebar__footer">
-          <Link to="/settings" className="profile" onClick={closeMobileNav} title="Account settings">
+          <Link
+            to="/settings"
+            className="profile"
+            onClick={closeMobileNav}
+            title="Account settings">
             <span className="avatar">
               {user?.name?.charAt(0).toUpperCase()}
             </span>
             <div>
               <strong>{user?.name}</strong>
-              <small>
-                {isManager ? 'Manager / Admin' : 'Team Member'}
-              </small>
+              <small>{isManager ? "Manager / Admin" : "Team Member"}</small>
             </div>
           </Link>
           <button
             className="icon-button"
             onClick={logout}
             aria-label="Sign out"
-            title="Sign out"
-          >
+            title="Sign out">
             <FiLogOut />
           </button>
         </div>
@@ -149,6 +144,7 @@ export const AppShell = () => {
       <main className="main-content">
         <Outlet />
       </main>
+      {isManager && <ManagerChat />}
     </div>
-  )
-}
+  );
+};

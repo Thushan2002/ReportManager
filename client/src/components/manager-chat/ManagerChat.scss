@@ -1,0 +1,188 @@
+.manager-chat {
+  position: fixed;
+  right: 28px;
+  bottom: 24px;
+  z-index: 110;
+  font-family: "DM Sans", sans-serif;
+}
+.manager-chat__toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 24px;
+  padding: 12px 16px;
+  background: var(--color-orange);
+  color: var(--color-green-dark);
+  box-shadow: 0 12px 28px rgba(22, 76, 61, 0.22);
+  font-weight: 700;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.manager-chat__toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(22, 76, 61, 0.28);
+}
+.manager-chat__toggle svg {
+  font-size: 18px;
+}
+.manager-chat__panel {
+  width: min(380px, calc(100vw - 32px));
+  height: min(590px, calc(100vh - 120px));
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: var(--color-paper);
+  box-shadow: 0 20px 60px rgba(22, 76, 61, 0.2);
+  animation: manager-chat-rise 0.2s ease-out;
+}
+.manager-chat__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  background: var(--color-green-dark);
+  color: #fff;
+}
+.manager-chat__eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #a6d0b4;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.manager-chat__header h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 20px;
+}
+.manager-chat__close {
+  border: 0;
+  padding: 4px;
+  background: transparent;
+  color: #dbe9df;
+  font-size: 20px;
+}
+.manager-chat__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  background: #f8f7f2;
+}
+.manager-chat__welcome {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.manager-chat__welcome-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--color-green-pale);
+  color: var(--color-green);
+  font-size: 18px;
+}
+.manager-chat__starters {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.manager-chat__starters button {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 10px 11px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.manager-chat__starters button:hover {
+  border-color: var(--color-green);
+}
+.manager-chat__message {
+  width: fit-content;
+  max-width: 88%;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.manager-chat__message--manager {
+  margin-left: auto;
+  background: var(--color-green);
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+.manager-chat__message--assistant {
+  background: #fff;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  border-bottom-left-radius: 3px;
+}
+.manager-chat__typing {
+  color: var(--color-muted);
+  font-style: italic;
+}
+.manager-chat__form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-paper);
+}
+.manager-chat__form input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 10px 11px;
+  outline: 0;
+  color: var(--color-ink);
+  font-size: 13px;
+}
+.manager-chat__form input:focus {
+  border-color: var(--color-green);
+  box-shadow: 0 0 0 3px rgba(27, 107, 82, 0.12);
+}
+.manager-chat__form button {
+  width: 40px;
+  border: 0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--color-green);
+  color: #fff;
+  font-size: 16px;
+}
+.manager-chat__form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+@keyframes manager-chat-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 800px) {
+  .manager-chat {
+    right: 16px;
+    bottom: 16px;
+  }
+}

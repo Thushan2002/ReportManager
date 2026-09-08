@@ -30,6 +30,8 @@ export const config = {
     'development-secret-change-me'
   ),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '1d',
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   clientOrigin: requireInProduction(
     process.env.CLIENT_ORIGIN,
     'CLIENT_ORIGIN',

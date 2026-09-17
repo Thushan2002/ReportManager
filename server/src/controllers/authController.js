@@ -14,11 +14,13 @@ export const login = async (request, response) => {
 }
 
 export const invite = async (request, response) => {
-  response.status(201).json(await inviteUser(request.body))
+  const result = await inviteUser(request.body)
+  response.status(201).json({user: result.user})
 }
 
 export const currentUser = async (request, response) => {
-  response.json({user: await getPublicUserById(request.user.id)})
+  const result = await getPublicUserById(request.user.id)
+  response.json({user: result.user})
 }
 
 export const logout = (_request, response) => {

@@ -1,11 +1,11 @@
-import { Router } from 'express'
-import { currentUser, invite, login, logout, register } from '../controllers/authController.js'
-import { requireAuth } from '../middlewares/auth.js'
-import { requireRole } from '../middlewares/requireRole.js'
-import { validationMiddleware } from '../middlewares/validationMiddleware.js'
-import { asyncHandler } from '../utils/asyncHandler.js'
-import { ROLES } from '../constants/roles.js'
-import { inviteUserSchema, loginSchema, registrationSchema } from '../validations/auth.js'
+import {Router} from 'express'
+import {currentUser, invite, login, logout, register} from '../controllers/authController.js'
+import {requireAuth} from '../middlewares/auth.js'
+import {requireRole} from '../middlewares/requireRole.js'
+import {validationMiddleware} from '../middlewares/validationMiddleware.js'
+import {asyncHandler} from '../utils/asyncHandler.js'
+import {ROLES} from '../constants/roles.js'
+import {inviteUserSchema, loginSchema, registrationSchema} from '../validations/auth.js'
 
 const router = Router()
 

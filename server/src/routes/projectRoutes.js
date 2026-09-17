@@ -5,9 +5,8 @@ import {requireRole} from '../middlewares/requireRole.js'
 import {ROLES} from '../constants/roles.js'
 import {asyncHandler} from '../utils/asyncHandler.js'
 import {validationMiddleware} from '../middlewares/validationMiddleware.js'
-import Joi from 'joi'
+import {projectSchema} from '../validations/project.js'
 
-const projectSchema = Joi.object({name: Joi.string().trim().required(), description: Joi.string().allow(''), members: Joi.array().items(Joi.string())})
 const router = Router()
 router.use(requireAuth)
 router.get('/', asyncHandler(list))

@@ -1,26 +1,15 @@
 import Project from '../schemas/Project.js'
-import Report from '../schemas/Report.js'
 import {ApiError} from '../utils/apiError.js'
+import {createProject, listProjects} from '../services/projectService.js'
 
 export const list = async (_request, response) => {
-  const projects = await Project.find().populate('members', 'name email role').sort({name: 1})
-  const reportCounts = await Report.aggregate([
-    {$group: {_id: '$project', count: {$sum: 1}}}
-  ])
-  const countMap = Object.fromEntries(reportCounts.map(r => [r._id, r.count]))
-
-  const result = projects.map(p => ({
-    ...p.toObject(),
-    reportsCount: countMap[p.name] || 0
-  }))
-
-  response.json(result)
+  const result = await listProjects()
+  response.json({reports: result.reports})
 }
 
 export const create = async (request, response) => {
-  const project = await Project.create(request.body)
-  const populated = await Project.findById(project._id).populate('members', 'name email role')
-  response.status(201).json(populated)
+  const result = await createProject(request.body)
+  response.status(201).json({report: result.report})
 }
 
 export const update = async (request, response) => {

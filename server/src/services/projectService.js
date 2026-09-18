@@ -15,7 +15,7 @@ export const listProjects = async () => {
   }))
 
   return {
-    reports: result
+    projects: result
   }
 }
 
@@ -24,18 +24,24 @@ export const createProject = async ({name, description, members}) => {
   const populated = await Project.findById(project._id).populate('members', 'name email role')
 
   return {
-    report: populated
+    project: populated
   }
 }
 
-export const update = async (request, response) => {
-  const project = await Project.findByIdAndUpdate(request.params.id, request.body, {new: true, runValidators: true}).populate('members', 'name email role')
+export const updateProject = async ({body, params}) => {
+  const project = await Project.findByIdAndUpdate(params.id, body, {new: true, runValidators: true}).populate('members', 'name email role')
   if (!project) throw new ApiError(404, 'Project not found')
-  response.json(project)
+
+  return {
+    project: project
+  }
 }
 
-export const remove = async (request, response) => {
-  const project = await Project.findByIdAndDelete(request.params.id)
+export const removeProject = async ({id}) => {
+  const project = await Project.findByIdAndDelete(id)
   if (!project) throw new ApiError(404, 'Project not found')
-  response.status(204).send()
+
+  return {
+    projectId: id
+  }
 }

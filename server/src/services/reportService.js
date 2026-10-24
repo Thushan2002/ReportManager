@@ -15,8 +15,8 @@ const getWeekBounds = (date = new Date()) => {
   return {weekStart, weekEnd}
 }
 
-export const listReports = ({id, role}, query = {}) => {
-  const filter = Number(role) === ROLES.ADMIN ? {} : {owner: id}
+export const listReports = async ({user, query = {}}) => {
+  const filter = Number(user.role) === ROLES.ADMIN ? {} : {owner: user.id}
 
   if (query.status) {
     filter.status = query.status
@@ -24,7 +24,7 @@ export const listReports = ({id, role}, query = {}) => {
   if (query.project) {
     filter.project = query.project
   }
-  if (query.owner && Number(role) === ROLES.ADMIN) {
+  if (query.owner && Number(user.role) === ROLES.ADMIN) {
     filter.owner = query.owner
   }
   if (query.from || query.to) {
@@ -44,25 +44,41 @@ export const listReports = ({id, role}, query = {}) => {
     ]
   }
 
-  return Report.find(filter)
+  const reports = await Report.find(filter)
     .populate('owner', 'name email role')
     .populate('reviewedBy', 'name email')
     .sort({weekStart: -1, updatedAt: -1})
+
+  return {
+    reports: reports
+  }
 }
 
-export const createReport = (ownerId, reportData) => {
-  return Report.create({...reportData, owner: ownerId})
+export const createReport = async ({ownerId, reportData}) => {
+  const report = await Report.create({...reportData, owner: ownerId})
+
+  return {
+    report: report
+  }
 }
 
-export const getReport = (user, reportId) => {
+export const getReport = async ({user, reportId}) => {
   const filter = Number(user.role) === ROLES.ADMIN ? {_id: reportId} : {_id: reportId, owner: user.id}
-  return Report.findOne(filter)
+
+  const report = await Report.findOne(filter)
     .populate('owner', 'name email role')
     .populate('reviewedBy', 'name email')
     .populate('versions.reviewedBy', 'name email')
+
+  if (!report) {
+    throw new ApiError(404, "Report not found")
+  }
+  return {
+    report: report
+  }
 }
 
-export const updateReport = async (user, reportId, reportData) => {
+export const updateReport = async ({user, reportId, reportData}) => {
   const report = await Report.findOne({_id: reportId, owner: user.id})
   if (!report) throw new ApiError(404, 'Report not found')
   if (!['Draft', 'Needs Correction'].includes(report.status)) {
@@ -70,10 +86,12 @@ export const updateReport = async (user, reportId, reportData) => {
   }
 
   Object.assign(report, reportData)
-  return report.save()
+  return {
+    report: await report.save()
+  }
 }
 
-export const submitReport = async (userId, reportId) => {
+export const submitReport = async ({userId, reportId}) => {
   const report = await Report.findOne({_id: reportId, owner: userId})
   if (!report) throw new ApiError(404, 'Report not found')
   if (!['Draft', 'Needs Correction'].includes(report.status)) {
@@ -109,10 +127,12 @@ export const submitReport = async (userId, reportId) => {
   report.reviewedBy = null
 
   await report.save()
-  return Report.findById(report._id).populate('owner', 'name email role').populate('reviewedBy', 'name email')
+  return {
+    report: await Report.findById(report._id).populate('owner', 'name email role').populate('reviewedBy', 'name email')
+  }
 }
 
-export const reviewReport = async (reviewerId, reportId, {action, comment}) => {
+export const reviewReport = async ({reviewerId, reportId, reviewData: {action, comment}}) => {
   const report = await Report.findById(reportId)
   if (!report) throw new ApiError(404, 'Report not found')
   if (report.status !== 'Submitted') {
@@ -137,11 +157,18 @@ export const reviewReport = async (reviewerId, reportId, {action, comment}) => {
   }
 
   await report.save()
-  return Report.findById(report._id).populate('owner', 'name email role').populate('reviewedBy', 'name email')
+  return {
+    report: await Report.findById(report._id).populate('owner', 'name email role').populate('reviewedBy', 'name email')
+  }
 }
 
-export const deleteReport = (ownerId, reportId) => {
-  return Report.findOneAndDelete({_id: reportId, owner: ownerId, status: 'Draft'})
+export const deleteReport = async ({ownerId, reportId}) => {
+  const report = await Report.findOneAndDelete({_id: reportId, owner: ownerId, status: 'Draft'})
+  if (!report) throw new ApiError(404, 'Report not found')
+
+  return {
+    reportId: reportId
+  }
 }
 
 export const dashboardMetrics = async () => {
